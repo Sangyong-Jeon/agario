@@ -8,7 +8,5 @@ public class GameServerMain {
 		// 게임서버를 실행한다.
 		Thread world = new Thread(new GameWorld(), "게임서버");
 		world.start();
-		
-		
 	}
 }

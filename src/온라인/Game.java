@@ -20,7 +20,7 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 
 import 온라인.생성쓰레드.Create;
-import 온라인.채팅클라이언트.Client;
+import 온라인.채팅클라이언트.ChatClient;
 
 public class Game extends JFrame implements MouseMotionListener { // JFrame이라고 불리는 클래스 상속받고, MouseMotionListener 구현함.
 	// 구현을 하면 부모의 메소드를 반드시 오버라이딩(재정의)해야함.
@@ -80,7 +80,7 @@ public class Game extends JFrame implements MouseMotionListener { // JFrame이라�
 			InetAddress ia = InetAddress.getLocalHost();
 			String ip_str = ia.toString();
 			String ip = ip_str.substring(ip_str.indexOf("/") + 1);
-			Client client = new Client(ip, 5555);
+			ChatClient client = new ChatClient(ip, 5555);
 //			jlp.add(client, new Integer(0));
 			this.add(client, "West");
 		} catch (UnknownHostException e) {

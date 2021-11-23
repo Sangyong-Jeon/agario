@@ -9,27 +9,27 @@ public class Cell {
 	public static ArrayList<Cell> cells = new ArrayList<Cell>();
 	public static int cellCount;
 	public String name;
-	public int x, y;
-	double mass = 10;
+	public double x, y, mass;
 	int speed = 1;
 	
 	public int goalX, goalY; // ¸¶¿ì½º ÁÂÇ¥
 
 	Color cellColor;
 
-	public Cell(String name, int x, int y) {
+	public Cell(String name, int x, int y, int mass) {
 		this.name = name;
 		this.x = x;
 		this.y = y;
+		this.mass = mass;
 		this.randomColor();
 		cellCount++;
 	}
 	
 	public void Update() {
-		int dx = (goalX - this.x);
-		int dy = (goalY - this.y);
-		this.x += dx*1/35;
-		this.y += dy*1/35;
+		double dx = (goalX - this.x);
+		double dy = (goalY - this.y);
+		this.x += dx*1/100;
+		this.y += dy*1/100;
 	}
 
 	public void randomColor() {
@@ -54,9 +54,9 @@ public class Cell {
 	
 	public void Draw(Graphics bbg) {
 		bbg.setColor(cellColor);
-		bbg.drawRect( x,  y, (int) mass, (int) mass);
-		bbg.fillRect( x,  y, (int) mass, (int) mass);
+		bbg.drawRect( (int)x,  (int)y, (int) mass, (int) mass);
+		bbg.fillRect( (int)x,  (int)y, (int) mass, (int) mass);
 		bbg.setColor(Color.white);
-		bbg.drawString(name, (x+(int)mass/2-name.length()), (y+(int)mass/2+name.length()));
+		bbg.drawString(name, ((int)x+(int)mass/2-name.length()), ((int)y+(int)mass/2+name.length()));
 	}
 }

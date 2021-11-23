@@ -18,7 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class Client extends JPanel implements ActionListener, Runnable {
+public class ChatClient extends JPanel implements ActionListener, Runnable {
 	// 클라이언트 화면용
 //	Container container = getContentPane();
 	JTextArea textArea = new JTextArea();
@@ -30,7 +30,7 @@ public class Client extends JPanel implements ActionListener, Runnable {
 	BufferedReader in;
 	String str;
 
-	public Client(String ip, int port) {
+	public ChatClient(String ip, int port) {
 		// Panel 기본 설정
 //		setBounds(0, 0, 300, 900);
 //		setSize(200,200);

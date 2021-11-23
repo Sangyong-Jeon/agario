@@ -10,7 +10,7 @@ public class ClientMain {
 			InetAddress ia = InetAddress.getLocalHost();
 			String ip_str = ia.toString();
 			String ip = ip_str.substring(ip_str.indexOf("/")+1);
-			new Client(ip, 5555);
+			new ChatClient(ip, 5555);
 		} catch(UnknownHostException e) {
 			e.printStackTrace();
 		}

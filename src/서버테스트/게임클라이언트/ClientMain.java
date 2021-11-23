@@ -12,42 +12,45 @@ import java.awt.image.BufferedImage;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 import 서버테스트.Cell;
 import 서버테스트.Particle;
+import 온라인.채팅클라이언트.ChatClient;
 
 public class ClientMain extends JFrame implements MouseMotionListener {
-	public static ArrayList<Particle> pcopy;
-	public static Client client = null;
-	public int x, y;
+
+	public double x, y, goalX, goalY;
 	public String name;
 
-	public static int width = 1920;
-	public static int height = 1000;
+	public int width = 1920;
+	public int height = 1000;
 	BufferedImage backBuffer;
 	Insets insets;
 	public CardLayout card = null;
-
-	// 전역 필드로 만들어서 다른 메소드에서도 공통적으로 쓸 수 있게 하였다.
-	public static Connection conn = null; // Connection은 연결과 관련된 정보와 기능을 갖고있는 클래스
-	public static Statement stmt = null; // Statement 클래스는 SQL 구문을 실행하는 역할, 스스로는 SQL 구분못함(구문해석X), 전달역할을 한다.
-	// SQL 관리 O + 연결 정보 X
-	// Statement객체는 Connection객체의 메소드를 이용하여 생성하도록 설계되어 있다.
-	public static ResultSet rs = null; // select 등의 조회 쿼리문을 실행한 후 돌아오는 조회 값을 포함하는 클래스이다.
-	// 결과로 가져온 데이터는 Table 형태와 흡사
-	// ResultSet의 next()를 이용하여 값이 있는지 없는지 확인.
-	// next()실행 후 get() 메소드를 이용하여 값을 얻어옴. 여러행 있을시 반복문 사용
-
 	public boolean isDB = false;
 
-	public ClientMain(String nick) {
-		this.name = nick;
-		// initialize(); 창만드는 부분
+	// DB 관련
+	static Connection conn = null;
+	static Statement stmt = null;
+	static ResultSet rs = null;
+	// DB에 있는 먹이 갯수
+	int particleNo = 0;
+
+	Client client = null;
+	public JPanel pane = null;
+	int fps = 60;
+
+	public void initialize() {
+		// initialize();
 		Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setTitle("세포키우기");
 		this.setResizable(true);
@@ -61,26 +64,61 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		this.addMouseMotionListener(this);
 		this.backBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
-		// 서버 접속하는 부분
-		connection(this, name);
+		pane = new JPanel();
+		pane.setSize(1600, height);
+		pane.setVisible(true);
 
-//		// DB 연결
-//		try {
-//			conn = makeConnection();
-//			stmt = conn.createStatement();
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
+		this.add(pane, "Center");
+	}
 
-		// 그리기
-		while (true) {
-			this.update();
-			this.draw();
-			this.conMouse();
+	public void Chat() {
+		try {
+			InetAddress ia = InetAddress.getLocalHost();
+			String ip_str = ia.toString();
+			String ip = ip_str.substring(ip_str.indexOf("/") + 1);
+			ChatClient client = new ChatClient(ip, 5555);
+			this.add(client, "West");
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
 		}
 	}
 
-	public static void connection(ClientMain main, String name) {
+	public ClientMain(String nick) {
+		this.name = nick;
+		// 기본설정
+		initialize();
+		// 채팅 연결
+		Chat();
+		this.setVisible(true);
+		// DB 연결
+		makeConnection();
+
+		// DB에서 먹이 조회
+		pDisplay();
+		// DB에서 세포 조회
+		cDisplay();
+
+		// 서버 접속하는 부분
+		connection(this, name, client);
+
+		while (true) {
+			long time = System.currentTimeMillis();
+			this.update();
+			this.draw();
+			time = (1000 / fps) - (System.currentTimeMillis() - time);
+			if (time > 0) {
+				try {
+					Thread.sleep(time);
+				} catch (Exception e) {
+					e.getStackTrace();
+				}
+			}
+
+//					this.conMouse();
+		}
+	}
+
+	public static void connection(ClientMain main, String name, Client client) {
 		try {
 			InetAddress ia = InetAddress.getLocalHost();
 			String ip_str = ia.toString();
@@ -94,13 +132,22 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 	}
 
 	public void update() {
+
 		for (Cell cell : Cell.cells) {
 			cell.Update();
 		}
+
+		mouseMove();
+
+		for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
+			Particle p = it.next();
+			p.Update();
+		}
+
 	}
 
 	public void draw() {
-		Graphics g = getGraphics();
+		Graphics g = pane.getGraphics();
 		Graphics bbg = backBuffer.getGraphics();
 		Graphics bbg2 = backBuffer.getGraphics();
 
@@ -122,17 +169,18 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		}
 
 		g.drawImage(backBuffer, insets.left, insets.top, this);
+		System.out.println("그리기완료");
 	}
 
-	public void conMouse() {
-		for (Cell cell : Cell.cells) {
-			if (cell.name.equals(name)) {
-				this.x = cell.x;
-				this.y = cell.y;
-			}
-		}
-		client.out.println("c" + name + "x" + x + "y" + y);
-	}
+//	public void conMouse() {
+//		for (Cell cell : Cell.cells) {
+//			if (cell.name.equals(name)) {
+//				this.x = cell.x;
+//				this.y = cell.y;
+//				break;
+//			}
+//		}
+//	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) { // 마우스 드래그할때만
@@ -144,25 +192,179 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 			if (cell.name.equals(name)) {
 				cell.getMouseX(e.getX());
 				cell.getMouseY(e.getY());
+				break;
 			}
-		}
-		if (isDB == true) {
-			mouseMove();
 		}
 	}
 
 	public void mouseMove() {
-		for (Cell cell : Cell.cells) { // cells 배열 중 내 세포 찾기
-			if (cell.name.equals(name)) { // 내 세포를 찾아서 x, y 좌표값 수정
-				this.x = cell.goalX;
-				this.y = cell.goalY;
-				break;
+		for (Cell c : Cell.cells) { // cells 배열 중 내 세포 찾기
+			if (c.name.equals(name)) { // 내 세포를 찾아서 x, y 좌표값 수정
+				this.x = c.x;
+				this.y = c.y;
+				updateDB("cell", name, x, y, c.mass);
+				client.out.println("c");
 			}
 		}
-		// 내 세포 x,y좌표값 수정 후 DB에 갱신
-		Client.updateDB("cell", name, Integer.toString(x), Integer.toString(y));
-		// 갱신 후 서버에 움직였다는 신호를 줌.
-		client.out.println("c");
 
+	}
+
+	// ----------------------------------------DB 관련
+	public void makeConnection() { // conn과 stmt를 설정해준다.
+		String url = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
+		String user = "test";
+		String password = "1234";
+
+		// 1. JDBC 드라이버 적재
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		System.out.println("드라이버 로딩이 성공했어요!!");
+
+		// 2. 데이터베이스 연결
+		try {
+			conn = DriverManager.getConnection(url, user, password);
+			stmt = conn.createStatement();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// 세포 조회 후 생성,갱신
+	public void cDisplay() {
+		try {
+			boolean isTrue = false;
+			String sql = "select * from cell";
+			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
+
+			while (rs.next()) {
+				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
+				isTrue = false;
+				String name = rs.getString("cname");
+				int x = (int) rs.getInt("cx");
+				int y = (int) rs.getInt("cy");
+				int mass = (int) rs.getInt("cmass");
+				System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				// cells 리스트가 비어있지 않을 때
+				if (!Cell.cells.isEmpty()) {
+					// cells 리스트의 값들을 하나씩 검색한다.
+					for (Cell c : Cell.cells) {
+						// 만약 현재 조회중인 세포의 이름과 같을 때
+						if (c.name.equals(name)) {
+							c.x = x;
+							c.y = y;
+							c.mass = mass;
+							// 현재 조회중인것은 리스트안에 있다고 설정
+							isTrue = true;
+							// for문 검색을 멈춘다.
+							break;
+						}
+					}
+					// 리스트가 생성되어 있지만 현재 검색중인 세포가 없을 때 생성
+					if (!isTrue) {
+						Cell.cells.add(new Cell(name, x, y, mass));
+					}
+				} else { // cells 리스트가 비어있을 때
+					Cell.cells.add(new Cell(name, x, y, mass));
+				}
+			}
+
+			System.out.println("세포 DB 조회 완료");
+		} catch (SQLException e) {
+			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("Null 예외발생");
+			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("예외 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// 먹이 조회 후 생성,갱신
+	public void pDisplay() {
+		try {
+			String sql = "select * from particle";
+			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
+			int result = 0;// 검색횟수
+
+			while (rs.next()) {
+				result++; // 검색할 때마다 1씩 증가
+				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
+				boolean isTrue = false;
+				String name = rs.getString("pname");
+				int x = rs.getInt("px");
+				int y = rs.getInt("py");
+				int mass = rs.getInt("pmass");
+				System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				// particles 리스트가 비어있지 않을 때
+				if (!Particle.particles.isEmpty()) {
+					// particles 리스트의 값들을 하나씩 검색한다.
+					for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
+						if (it != null) {
+							Particle p = it.next();
+							if (p.pname.equals(name)) {
+								p.x = x;
+								p.y = y;
+								// 현재 조회중인 것은 리스트 안에 있다고 설정
+								isTrue = true;
+								// for문을 멈춘다.
+								break;
+							}
+						}
+					}
+					// 리스트가 생성되어 있지만 현재 검색중인 먹이가 없을 때 생성
+					if (!isTrue) {
+						Particle.particles.add(new Particle(name, x, y, mass));
+					}
+				} else { // particles 리스트가 비어있을 때
+					Particle.particles.add(new Particle(name, x, y, mass));
+				}
+			}
+			particleNo = result;
+			System.out.println(particleNo + " 먹이 DB 조회 완료");
+		} catch (SQLException e) {
+			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// DB 삽입
+	public void insertDB(String table, String name, int x, int y, int mass) {
+		try {
+			String sql = "insert into " + table + " values('" + name + "', " + x + " , " + y + ", " + mass + ")";
+			stmt.executeUpdate(sql);
+			System.out.println("테이블 : " + table + " 이름 : " + name + " 삽입 완료");
+		} catch (SQLException e) {
+			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// 세포 DB 수정
+	public void updateDB(String table, String name, double x, double y, double mass) {
+		try {
+			String sql = "update cell set cx = " + x + ", cy = " + y + ", cmass = " + mass + " where cname = '" + name
+					+ "'";
+			stmt.executeUpdate(sql);
+			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
+		} catch (SQLException e) {
+			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// DB에서 삭제
+	public void deleteDB(String name) {
+		try {
+			String sql = "delete from cell where cname = '" + name + "'";
+			stmt.executeUpdate(sql);
+			System.out.println(name + "님이 DB에서 삭제되었습니다.");
+		} catch (SQLException e) {
+
+		}
 	}
 }
