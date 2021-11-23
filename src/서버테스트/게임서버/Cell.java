@@ -1,4 +1,4 @@
-package 서버테스트;
+package 서버테스트.게임서버;
 
 import java.awt.Color;
 import java.awt.Graphics;

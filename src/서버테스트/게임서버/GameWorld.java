@@ -17,10 +17,7 @@ import java.util.Iterator;
 
 import javax.swing.JFrame;
 
-import 서버테스트.Cell;
-import 서버테스트.Particle;
-
-public class GameWorld extends JFrame implements Runnable {
+public class GameWorld extends JFrame {
 
 	public static int width = 1920;
 	public static int height = 1000;
@@ -49,14 +46,13 @@ public class GameWorld extends JFrame implements Runnable {
 		this.setVisible(true);
 		this.requestFocus();
 		this.backBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
 		// DB 연결
 		makeConnection();
-	}
 
-	@Override
-	public void run() {
 		// DB에서 먹이 조회
 		pDisplay();
+
 		// DB 먹이 갯수가 5000개 미만일 때 먹이 생성
 		while (particleNo < 5000) {
 			insertDB("particle", "p" + particleNo++, (int) Math.floor(Math.random() * 5000),
@@ -67,21 +63,29 @@ public class GameWorld extends JFrame implements Runnable {
 		// DB안의 세포 조회
 		cDisplay();
 
+		// 무한 반복
 		while (true) {
+			long time = System.currentTimeMillis();
 			update();
 			draw();
+			time = (1000 / 60) - (System.currentTimeMillis() - time);
+			if (time > 0) {
+				try {
+					Thread.sleep(time);
+				} catch (Exception e) {
+					e.getStackTrace();
+				}
+			}
 		}
 	}
 
 	public void update() {
-//		for (Cell cell : Cell.cells) {
-//			cell.Update();
-//		}
-
+		// 먹이 동작
 		for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
 			Particle p = it.next();
 			p.Update();
 		}
+		System.out.println("동작 완료");
 	}
 
 	// 그리기
@@ -138,48 +142,50 @@ public class GameWorld extends JFrame implements Runnable {
 	// 세포 조회 후 생성,갱신
 	public static void cDisplay() {
 		try {
+			boolean isTrue = false;
 			String sql = "select * from cell";
 			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
-
-			if (rs != null) {
-				while (rs.next()) {
-					// 검색할 때 마다 isTrue를 false로 초기화시켜줌
-					boolean isTrue = false;
-					String name = rs.getString("cname");
-					int x = rs.getInt("cx");
-					int y = rs.getInt("cy");
-					int mass = rs.getInt("cmass");
-					System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
-					// cells 리스트가 비어있지 않을 때
-					if (!Cell.cells.isEmpty()) {
-						// cells 리스트의 값들을 하나씩 검색한다.
-						for (Cell c : Cell.cells) {
-							// 만약 현재 조회중인 세포의 이름과 같을 때
-							if (c.name.equals(name)) {
-								c.x = x;
-								c.y = y;
-								c.mass = mass;
-								// 현재 조회중인것은 리스트안에 있다고 설정
-								isTrue = true;
-								// for문 검색을 멈춘다.
-								break;
-							}
+			while (rs.next()) {
+				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
+				isTrue = false;
+				String name = rs.getString("cname");
+				int x = (int) rs.getInt("cx");
+				int y = (int) rs.getInt("cy");
+				int mass = (int) rs.getInt("cmass");
+				System.out.println("검색 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				// cells가 비어있지 않을 때
+				if (!Cell.cells.isEmpty()) {
+					// cells 리스트의 값들을 하나씩 검색한다.
+					for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+						Cell c = it.next();
+						// 현재 조회중인 세포의 이름과 같을 때
+						if (c.name.equals(name)) {
+							c.x = x;
+							c.y = y;
+							c.mass = mass;
+							// 현재 조회중인 세포는 리스트안에 있다고 설정
+							isTrue = true;
+							// for문을 나옴
+							break;
 						}
-						// 리스트가 생성되어 있지만 현재 검색중인 세포가 없을 때 생성
-						if (!isTrue) {
-							Cell.cells.add(new Cell(name, x, y, mass));
-//						insertDB("cell", name, x, y, mass);
-						}
-					} else { // cells 리스트가 비어있을 때
+					}
+					// 리스트안에 DB에서 검색중인 세포가 없을 때
+					if (!isTrue) {
 						Cell.cells.add(new Cell(name, x, y, mass));
 					}
+				} else {
+					Cell.cells.add(new Cell(name, x, y, mass));
 				}
-			} else {
-				System.out.println("rs가 null이에요!!");
 			}
 			System.out.println("세포 DB 조회 완료");
 		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
+			System.out.println("GameWorld에서 SQLException 발생");
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("GameWorld에서 Null 예외발생");
+			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("GameWorld에서 예외 발생");
 			e.printStackTrace();
 		}
 	}
@@ -203,14 +209,14 @@ public class GameWorld extends JFrame implements Runnable {
 				// particles 리스트가 비어있지 않을 때
 				if (!Particle.particles.isEmpty()) {
 					// particles 리스트의 값들을 하나씩 검색한다.
-					for (Particle p : Particle.particles) {
-						// 만약 현재 조회중인 먹이의 이름과 같을 때
+					for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
+						Particle p = it.next();
 						if (p.pname.equals(name)) {
 							p.x = x;
 							p.y = y;
-							// 현재 조회중인것은 리스트안에 있다고 설정
+							// 현재 조회중인 것은 리스트 안에 있다고 설정
 							isTrue = true;
-							// for문 검색을 멈춘다.
+							// for문을 멈춘다.
 							break;
 						}
 					}
@@ -226,6 +232,12 @@ public class GameWorld extends JFrame implements Runnable {
 			System.out.println(particleNo + " 먹이 DB 조회 완료");
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("Null 예외 발생");
+			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("예외 발생");
 			e.printStackTrace();
 		}
 	}
@@ -243,10 +255,23 @@ public class GameWorld extends JFrame implements Runnable {
 	}
 
 	// 세포 DB 수정
-	public static void updateDB(String table, String name, double x, double y, double mass) {
+	public static void cUpdateDB(String table, String name, double x, double y, double mass) {
 		try {
 			String sql = "update cell set cx = " + x + ", cy = " + y + ", cmass = " + mass + " where cname = '" + name
 					+ "'";
+			stmt.executeUpdate(sql);
+			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
+		} catch (SQLException e) {
+			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// 먹이 DB 수정
+	public static void pUpdateDB(String table, String name, double x, double y, double mass) {
+		try {
+			String sql = "update particle set px = " + x + ", py = " + y + ", pmass = " + mass + " where pname = '"
+					+ name + "'";
 			stmt.executeUpdate(sql);
 			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
 		} catch (SQLException e) {

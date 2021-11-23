@@ -8,9 +8,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import 서버테스트.Cell;
-import 서버테스트.Particle;
-
 public class GameSocketThread extends Thread {
 	Socket socket;
 	GameServer server;
@@ -33,19 +30,16 @@ public class GameSocketThread extends Thread {
 	}
 
 	@Override
-	public void run() {
+	public void run() { // 서버가 클라이언트와 대화(통신)하기 위한 코드
 		try {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 
-			// 클라이언트와 연결 되고나서 닉네임 받기
+			// 클라이언트와 연결 되고나서 닉네임을 보내주는걸 받기
 			name = in.readLine();
-			System.out.println(name);
+			System.out.println(name+ "님이 서버통신에 접속하였습니다.");
 
-			// 닉네임 받고 DB에 세포 생성
-//			Cell.cells.add(new Cell(name, (int) Math.floor(Math.random() * 5000), (int) Math.floor(Math.random() * 5000), 10));
-			GameWorld.insertDB("cell", name, 100, 100, 10);
-			// 생성 후 세포 조회
+			// 세포 조회
 			GameWorld.cDisplay();
 			GameServer.broadCasting("c");
 

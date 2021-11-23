@@ -22,8 +22,8 @@ import java.util.Iterator;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import 서버테스트.Cell;
-import 서버테스트.Particle;
+import 서버테스트.게임서버.Cell;
+import 서버테스트.게임서버.Particle;
 import 온라인.채팅클라이언트.ChatClient;
 
 public class ClientMain extends JFrame implements MouseMotionListener {
@@ -87,19 +87,31 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		this.name = nick;
 		// 기본설정
 		initialize();
+		System.out.println("기본설정");
 		// 채팅 연결
 		Chat();
+		System.out.println("채팅설정");
 		this.setVisible(true);
 		// DB 연결
 		makeConnection();
+		System.out.println("DB 연결");
+
+		// 플레이어 세포 DB 생성
+		insertDB("cell", nick, 100, 100, 10);
+		System.out.println("플레이어 세포 DB생성");
+		Cell.cells.add(new Cell(nick, 100, 100, 10));
+
+		// DB에서 세포 조회
+		cDisplay();
+		System.out.println("DB에서 세포 조회");
 
 		// DB에서 먹이 조회
 		pDisplay();
-		// DB에서 세포 조회
-		cDisplay();
+		System.out.println("DB에서 먹이 조회");
 
 		// 서버 접속하는 부분
 		connection(this, name, client);
+		System.out.println("서버 접속하는 부분");
 
 		while (true) {
 			long time = System.currentTimeMillis();
@@ -118,6 +130,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		}
 	}
 
+	// 서버 연결 메소드
 	public static void connection(ClientMain main, String name, Client client) {
 		try {
 			InetAddress ia = InetAddress.getLocalHost();
@@ -133,16 +146,20 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 
 	public void update() {
 
-		for (Cell cell : Cell.cells) {
-			cell.Update();
+		for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+			Cell c = it.next();
+			if (c.name.equals(name)) {
+				c.Update();
+				break;
+			}
 		}
 
 		mouseMove();
 
-		for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
-			Particle p = it.next();
-			p.Update();
-		}
+//		for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
+//			Particle p = it.next();
+//			p.Update();
+//		}
 
 	}
 
@@ -172,16 +189,6 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		System.out.println("그리기완료");
 	}
 
-//	public void conMouse() {
-//		for (Cell cell : Cell.cells) {
-//			if (cell.name.equals(name)) {
-//				this.x = cell.x;
-//				this.y = cell.y;
-//				break;
-//			}
-//		}
-//	}
-
 	@Override
 	public void mouseDragged(MouseEvent e) { // 마우스 드래그할때만
 	}
@@ -200,9 +207,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 	public void mouseMove() {
 		for (Cell c : Cell.cells) { // cells 배열 중 내 세포 찾기
 			if (c.name.equals(name)) { // 내 세포를 찾아서 x, y 좌표값 수정
-				this.x = c.x;
-				this.y = c.y;
-				updateDB("cell", name, x, y, c.mass);
+				updateDB("cell", name, c.x, c.y, c.mass);
 				client.out.println("c");
 			}
 		}
@@ -210,7 +215,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 	}
 
 	// ----------------------------------------DB 관련
-	public void makeConnection() { // conn과 stmt를 설정해준다.
+	public void makeConnection() {
 		String url = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
 		String user = "test";
 		String password = "1234";
@@ -227,6 +232,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		try {
 			conn = DriverManager.getConnection(url, user, password);
 			stmt = conn.createStatement();
+			System.out.println("---DB 연결 완료---");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -238,7 +244,6 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 			boolean isTrue = false;
 			String sql = "select * from cell";
 			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
-
 			while (rs.next()) {
 				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
 				isTrue = false;
@@ -246,31 +251,34 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 				int x = (int) rs.getInt("cx");
 				int y = (int) rs.getInt("cy");
 				int mass = (int) rs.getInt("cmass");
-				System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
-				// cells 리스트가 비어있지 않을 때
+				System.out.println("검색 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				if (this.name.equals(name)) {
+					continue;
+				}
+				// cells가 비어있지 않을 때
 				if (!Cell.cells.isEmpty()) {
 					// cells 리스트의 값들을 하나씩 검색한다.
-					for (Cell c : Cell.cells) {
-						// 만약 현재 조회중인 세포의 이름과 같을 때
+					for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+						Cell c = it.next();
+						// 현재 조회중인 세포의 이름과 같을 때
 						if (c.name.equals(name)) {
 							c.x = x;
 							c.y = y;
 							c.mass = mass;
-							// 현재 조회중인것은 리스트안에 있다고 설정
+							// 현재 조회중인 세포는 리스트안에 있다고 설정
 							isTrue = true;
-							// for문 검색을 멈춘다.
+							// for문을 나옴
 							break;
 						}
 					}
-					// 리스트가 생성되어 있지만 현재 검색중인 세포가 없을 때 생성
+					// 리스트안에 DB에서 검색중인 세포가 없을 때
 					if (!isTrue) {
 						Cell.cells.add(new Cell(name, x, y, mass));
 					}
-				} else { // cells 리스트가 비어있을 때
+				} else {
 					Cell.cells.add(new Cell(name, x, y, mass));
 				}
 			}
-
 			System.out.println("세포 DB 조회 완료");
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
@@ -284,10 +292,33 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		}
 	}
 
+	// 특정 세포 조회 갱신
+	public void cDisplay(String str) {
+		String name = str.substring(str.indexOf("u") + 1);
+		System.out.println("name : " + name);
+		try {
+			String sql = "select cmass from cell where cname = '" + name + "'";
+			rs = stmt.executeQuery(sql);
+			rs.next();
+			int mass = rs.getInt("cmass");
+			for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+				Cell c = it.next();
+				if (c.name.equals(name)) {
+					c.mass = mass;
+					break;
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	// 먹이 조회 후 생성,갱신
 	public void pDisplay() {
 		try {
-			String sql = "select * from particle";
+			String sql = "select pname,px,py from particle";
 			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
 			int result = 0;// 검색횟수
 
@@ -298,36 +329,64 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 				String name = rs.getString("pname");
 				int x = rs.getInt("px");
 				int y = rs.getInt("py");
-				int mass = rs.getInt("pmass");
-				System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : ");
 				// particles 리스트가 비어있지 않을 때
 				if (!Particle.particles.isEmpty()) {
 					// particles 리스트의 값들을 하나씩 검색한다.
 					for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
-						if (it != null) {
-							Particle p = it.next();
-							if (p.pname.equals(name)) {
-								p.x = x;
-								p.y = y;
-								// 현재 조회중인 것은 리스트 안에 있다고 설정
-								isTrue = true;
-								// for문을 멈춘다.
-								break;
-							}
+						Particle p = it.next();
+						if (p.pname.equals(name)) {
+							p.x = x;
+							p.y = y;
+							// 현재 조회중인 것은 리스트 안에 있다고 설정
+							isTrue = true;
+							// for문을 멈춘다.
+							break;
 						}
 					}
 					// 리스트가 생성되어 있지만 현재 검색중인 먹이가 없을 때 생성
 					if (!isTrue) {
-						Particle.particles.add(new Particle(name, x, y, mass));
+						Particle.particles.add(new Particle(name, x, y, 1));
 					}
 				} else { // particles 리스트가 비어있을 때
-					Particle.particles.add(new Particle(name, x, y, mass));
+					Particle.particles.add(new Particle(name, x, y, 1));
 				}
 			}
 			particleNo = result;
 			System.out.println(particleNo + " 먹이 DB 조회 완료");
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("Null 예외 발생");
+			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("예외 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// 특정 먹이 조회 갱신
+	public void pDisplay(String str) {
+		String name = str.substring(str.indexOf("s") + 1);
+		System.out.println("name : " + name);
+		try {
+			String sql = "select pname,px,py from particle where pname = '" + name + "'";
+			rs = stmt.executeQuery(sql);
+			rs.next();
+			int x = rs.getInt("px");
+			int y = rs.getInt("py");
+			for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
+				Particle p = it.next();
+				if (p.pname.equals(name)) {
+					p.x = x;
+					p.y = y;
+					break;
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

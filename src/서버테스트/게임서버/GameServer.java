@@ -7,13 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameServer implements Runnable {
-	static ServerSocket serverSocket;
+	ServerSocket serverSocket;
 	Socket socket;
 	static List<Thread> list;
 
 	public GameServer() {
 		list = new ArrayList<Thread>();
-		System.out.println("서버가 시작되었습니다.");
+		System.out.println("게임서버가 시작되었습니다.");
 	}
 
 	@Override
@@ -23,6 +23,7 @@ public class GameServer implements Runnable {
 			serverSocket.setReuseAddress(true);
 
 			while (true) {
+				System.out.println("클라이언트 접속 대기!!!");
 				socket = serverSocket.accept(); // 클라이언트 접속 대기
 				GameSocketThread thread = new GameSocketThread(this, socket);
 				addClient(thread);

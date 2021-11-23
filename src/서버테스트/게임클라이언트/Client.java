@@ -54,8 +54,6 @@ public class Client extends JPanel implements Runnable {
 		// 닉네임 보내주기
 		out.println(userName);
 		System.out.println("Client의 run()에서 userName : " + userName);
-		main.cDisplay();
-
 		main.isDB = true;
 
 		while (true) { // 무한 반복
@@ -63,7 +61,14 @@ public class Client extends JPanel implements Runnable {
 				System.out.println("클라이언트 입력받기 전");
 				str = in.readLine();
 				System.out.println("입력받음 : " + str);
-				if (str.equals("c")) { // 세포문자 입력받으면 세포 조회
+
+				if (str.indexOf("s") == 0) {
+					System.out.println("특정 먹이 갱신");
+					main.pDisplay(str);
+				} else if (str.indexOf("u") == 0) {
+					System.out.println("특정 클라이언트 세포 갱신");
+					main.cDisplay(str);
+				} else if (str.equals("c")) { // 세포문자 입력받으면 세포 조회
 					System.out.println("클라이언트 세포 조회");
 					main.cDisplay();
 				} else if (str.equals("p")) { // 먹이문자 입력받으면 먹이 조회
