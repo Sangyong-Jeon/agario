@@ -27,13 +27,13 @@ public class Particle {
 		for (Cell c : Cell.cells) {
 			if (checkCollide(c.x, c.y, c.mass)) {
 				c.addMass(this.mass);
-				GameWorld.cUpdateDB("cell", c.name, c.x, c.y, c.mass);
+				GameWorld.cmassUpdateDB(c.name, c.mass);
 				GameServer.broadCasting("u"+c.name);
 				// 먹혔으니 랜덤위치에 리스폰
 				this.x = (int) Math.floor(Math.random() * 1000);
 				this.y = (int) Math.floor(Math.random() * 1000);
 				// DB에 먹이 좌표 수정
-				GameWorld.pUpdateDB("particle", pname, x, y, mass);
+				GameWorld.pUpdateDB(pname, x, y, mass);
 				// 특정 먹이를 수정했다고 모든 클라이언트에게 날림
 				GameServer.broadCasting("s"+pname);
 				isSend = true;

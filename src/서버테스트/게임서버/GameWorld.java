@@ -85,6 +85,11 @@ public class GameWorld extends JFrame {
 			Particle p = it.next();
 			p.Update();
 		}
+
+		for (Cell c : Cell.cells) {
+			c.Action();
+		}
+
 		System.out.println("동작 완료");
 	}
 
@@ -190,6 +195,40 @@ public class GameWorld extends JFrame {
 		}
 	}
 
+	// 특정 세포 조회 후 갱신
+	public static void cellDisplay(String cname) {
+		try {
+			String sql = "select * from cell where cname = '" + cname + "'";
+			rs = stmt.executeQuery(sql);
+			rs.next();
+			String name = rs.getString("cname");
+			int x = (int) rs.getInt("cx");
+			int y = (int) rs.getInt("cy");
+			int mass = (int) rs.getInt("cmass");
+			System.out.println("검색 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+			for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+				Cell c = it.next();
+				if (c.name.equals(name)) {
+					c.x = x;
+					c.y = y;
+					c.mass = mass;
+					GameServer.broadCasting("u" + c.name);
+					break;
+				}
+			}
+			System.out.println(name + " 특정 세포 조회 완료");
+		} catch (SQLException e) {
+			System.out.println("GameWorld에서 SQL 예외 발생");
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("GameWorld에서 Null 예외발생");
+			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("GameWorld에서 예외 발생");
+			e.printStackTrace();
+		}
+	}
+
 	// 먹이 조회 후 생성,갱신
 	public static void pDisplay() {
 		try {
@@ -255,12 +294,25 @@ public class GameWorld extends JFrame {
 	}
 
 	// 세포 DB 수정
-	public static void cUpdateDB(String table, String name, double x, double y, double mass) {
+	public static void cUpdateDB(String name, double x, double y, double mass) {
 		try {
 			String sql = "update cell set cx = " + x + ", cy = " + y + ", cmass = " + mass + " where cname = '" + name
 					+ "'";
 			stmt.executeUpdate(sql);
-			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
+			System.out.println("테이블 : cell" + " 이름 : " + name + " 업데이트 완료");
+		} catch (SQLException e) {
+			System.out.println("SQLException 발생");
+			e.printStackTrace();
+		}
+	}
+
+	// 특정 세포 크기 수정
+	public static void cmassUpdateDB(String name, double mass) {
+		try {
+			String sql = "update cell set cmass = " + mass + " where cname = '" + name + "'";
+			stmt.executeUpdate(sql);
+			System.out.println("테이블 : cell" + " 이름 : " + name + " 크기 업데이트 완료");
+			GameServer.broadCasting("u" + name);
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
 			e.printStackTrace();
@@ -268,12 +320,12 @@ public class GameWorld extends JFrame {
 	}
 
 	// 먹이 DB 수정
-	public static void pUpdateDB(String table, String name, double x, double y, double mass) {
+	public static void pUpdateDB(String name, double x, double y, double mass) {
 		try {
 			String sql = "update particle set px = " + x + ", py = " + y + ", pmass = " + mass + " where pname = '"
 					+ name + "'";
 			stmt.executeUpdate(sql);
-			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
+			System.out.println("테이블 : particle" + " 이름 : " + name + " 업데이트 완료");
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
 			e.printStackTrace();

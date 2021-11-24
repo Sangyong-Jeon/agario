@@ -110,7 +110,7 @@ public class Cell {
 		for (Cell cell : cells) {
 			// 꺼낸 세포와 부딪혔고,꺼낸세포와 이 세포가 같지 않고, 이세포의 크기가 꺼낸세포의 크기+10보다 클때
 			if (this.checkCollide(cell.x, cell.y, cell.mass) && this != cell && this.mass > cell.mass + 10) {
-				if (1 / (this.mass / cell.mass) >= .4 && this.mass < 4000) { // 자신의 세포크기가 꺼낸 세포의 크기보다 2.5배 이상이고, 이 세포크기가
+				if (1 / (this.mass / cell.mass) >= .4 && this.mass < 4000) { // 자신의 세포크기가 꺼낸 세포의 크기보다 2.5배 이하지만 크고, 이 세포크기가
 																				// 4000 미만일 때
 					addMass(cell.mass); // 꺼낸 세포의 크기를 자신의 세포 크기에 더한다.
 				}

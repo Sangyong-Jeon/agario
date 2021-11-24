@@ -27,61 +27,29 @@ import 서버테스트.게임서버.Particle;
 import 온라인.채팅클라이언트.ChatClient;
 
 public class ClientMain extends JFrame implements MouseMotionListener {
-
-	public double x, y, goalX, goalY;
+	// 세포
+	public double x, y;
 	public String name;
 
+	// 프레임 관련
 	public int width = 1920;
 	public int height = 1000;
 	BufferedImage backBuffer;
 	Insets insets;
 	public CardLayout card = null;
-	public boolean isDB = false;
+	public JPanel pane = null;
+	int fps = 60;
 
 	// DB 관련
 	static Connection conn = null;
 	static Statement stmt = null;
 	static ResultSet rs = null;
-	// DB에 있는 먹이 갯수
+	// DB 먹이 갯수
 	int particleNo = 0;
 
+	// 통신
 	Client client = null;
-	public JPanel pane = null;
-	int fps = 60;
-
-	public void initialize() {
-		// initialize();
-		Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
-		this.setTitle("세포키우기");
-		this.setResizable(true);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.setFocusable(true);
-		this.insets = this.getInsets();
-		this.setSize(insets.left + width + insets.right, insets.top + height + insets.bottom);
-		this.setLocation(size.width / 2 - getSize().width / 2, size.height / 2 - getSize().height / 2);
-		this.setVisible(true);
-		this.requestFocus();
-		this.addMouseMotionListener(this);
-		this.backBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-		pane = new JPanel();
-		pane.setSize(1600, height);
-		pane.setVisible(true);
-
-		this.add(pane, "Center");
-	}
-
-	public void Chat() {
-		try {
-			InetAddress ia = InetAddress.getLocalHost();
-			String ip_str = ia.toString();
-			String ip = ip_str.substring(ip_str.indexOf("/") + 1);
-			ChatClient client = new ChatClient(ip, 5555);
-			this.add(client, "West");
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-	}
+	boolean isRunning = true;
 
 	public ClientMain(String nick) {
 		this.name = nick;
@@ -112,8 +80,14 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		// 서버 접속하는 부분
 		connection(this, name, client);
 		System.out.println("서버 접속하는 부분");
-
-		while (true) {
+		
+		// 게임 동작
+		start();
+		
+	}
+	
+	public void start() {
+		while (isRunning) {
 			long time = System.currentTimeMillis();
 			this.update();
 			this.draw();
@@ -125,8 +99,50 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 					e.getStackTrace();
 				}
 			}
+		}
+		
+		if (rs != null) {
+			try { rs.close(); } catch (SQLException e) { e.printStackTrace(); }
+		}
+		if (stmt != null) {
+			try { stmt.close(); } catch (SQLException e) { e.printStackTrace(); }
+		}
+		if (conn != null) {
+			try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+		}
+	}
+	
+	public void initialize() {
+		// initialize();
+		Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+		this.setTitle("세포키우기");
+		this.setResizable(true);
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setFocusable(true);
+		this.insets = this.getInsets();
+		this.setSize(insets.left + width + insets.right, insets.top + height + insets.bottom);
+		this.setLocation(size.width / 2 - getSize().width / 2, size.height / 2 - getSize().height / 2);
+		this.setVisible(true);
+		this.requestFocus();
+		this.addMouseMotionListener(this);
+		this.backBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
-//					this.conMouse();
+		pane = new JPanel();
+		pane.setSize(1600, height);
+		pane.setVisible(true);
+
+		this.add(pane, "Center");
+	}
+
+	public void Chat() {
+		try {
+			InetAddress ia = InetAddress.getLocalHost();
+			String ip_str = ia.toString();
+			String ip = ip_str.substring(ip_str.indexOf("/") + 1);
+			ChatClient chat = new ChatClient(ip, 5555);
+			this.add(chat, "West");
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -297,13 +313,17 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		String name = str.substring(str.indexOf("u") + 1);
 		System.out.println("name : " + name);
 		try {
-			String sql = "select cmass from cell where cname = '" + name + "'";
+			String sql = "select * from cell where cname = '" + name + "'";
 			rs = stmt.executeQuery(sql);
 			rs.next();
+			int x = rs.getInt("cx");
+			int y = rs.getInt("cy");
 			int mass = rs.getInt("cmass");
 			for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
 				Cell c = it.next();
 				if (c.name.equals(name)) {
+					c.x = x;
+					c.y = y;
 					c.mass = mass;
 					break;
 				}
