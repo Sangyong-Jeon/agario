@@ -29,8 +29,10 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 	PrintWriter out;
 	BufferedReader in;
 	String str;
+	String name;
 
-	public ChatClient(String ip, int port) {
+	public ChatClient(String ip, int port, String name) {
+		this.name = name;
 		// Panel 기본 설정
 //		setBounds(0, 0, 300, 900);
 //		setSize(200,200);
@@ -81,6 +83,8 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 	// 서버로부터 응답되어 전달된 문자열을 읽어서 textArea에 출력하기
 	@Override
 	public void run() {
+		// 닉네임 서버에 보내준다.
+		out.println(name);
 		while(true) {
 			try {
 				str = in.readLine();

@@ -1,7 +1,7 @@
 package 오프라인.생성쓰레드;
 
 import 오프라인.Cell;
-import 오프라인.Game;
+import 오프라인.OfflineGame;
 import 오프라인.Particle;
 
 public class Create implements Runnable {
@@ -22,8 +22,8 @@ public class Create implements Runnable {
 			System.out.println("먹이생성중" + Particle.particleCount);
 		}
 
-		if (!Game.playerCreated) { // 플레이어 세포생성
-			Game.playerCreated = true;
+		if (!OfflineGame.playerCreated) { // 플레이어 세포생성
+			OfflineGame.playerCreated = true;
 			Cell.cells.add(new Cell("Bruce", (int) Math.floor(Math.random() * 10001),
 					(int) Math.floor(Math.random() * 2801), true));
 

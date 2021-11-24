@@ -42,7 +42,7 @@ public class Camera {
 			scaleFactor = 0.1;
 		}
 		sX = sY = scaleFactor;
-		x = ((cell.x + cell.mass * 0.5) - Game.width / sX * 0.5);
-		y = ((cell.y + cell.mass * 0.5) - Game.height / sY * 0.5);
+		x = ((cell.x + cell.mass * 0.5) - OfflineGame.width / sX * 0.5);
+		y = ((cell.y + cell.mass * 0.5) - OfflineGame.height / sY * 0.5);
 	}
 }
