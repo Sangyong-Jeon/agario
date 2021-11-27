@@ -55,44 +55,43 @@ public class Client extends JPanel implements Runnable {
 		out.println(userName);
 		System.out.println("Client의 run()에서 userName : " + userName);
 
-		try {
-			while (true) { // 무한 반복
-				try {
-					System.out.println("클라이언트 입력받기 전");
-					str = in.readLine();
-					System.out.println("입력받음 : " + str);
+		while (true) { // 무한 반복
+			try {
+				str = in.readLine();
+				System.out.println("입력받음 : " + str);
 
-					if (str.indexOf("s") == 0) {
-						System.out.println("특정 먹이 갱신");
-						main.pDisplay(str);
-					} else if (str.indexOf("u") == 0) {
-						System.out.println("특정 클라이언트 세포 갱신");
-						main.cDisplay(str);
-					} else if (str.equals("c")) { // 세포문자 입력받으면 세포 조회
-						System.out.println("클라이언트 세포 조회");
-						main.cDisplay();
-					} else if (str.equals("p")) { // 먹이문자 입력받으면 먹이 조회
-						System.out.println("클라이언트 먹이 조회");
-						main.pDisplay();
-					} else {
-						System.out.println("무엇인가 잘못되고 있다.");
-					}
-				} catch (IOException e) {
-					System.out.println("IOException이 클라이언트에서 발생");
-					e.printStackTrace();
-				} catch (NullPointerException e) {
-					System.out.println("Null 예외  클라이언트에서 발생!!");
-					e.printStackTrace();
-				} catch (Exception e) {
-					System.out.println("예외 클라이언트에서 발생!!");
-					e.printStackTrace();
+				// 나의 세포 첫 생성
+				if (str.indexOf("첫세포조회") == 0) {
+					String name = str.substring(str.indexOf("첫세포조회") + 5);
+					ClientMain.cDisplay("select * from cell where name = '" + name + "'");
 				}
+				// 세포 크기 조회
+				else if (str.indexOf("특정세포조회") == 0) {
+					String name = str.substring(str.indexOf("특정세포조회") + 6);
+					ClientMain.cDisplay("select * from cell where name = '" + name + "'");
+				}
+				// 사망 세포  조회
+				else if (str.indexOf("사망세포조회") == 0) {
+					String name = str.substring(str.indexOf("사망세포조회") + 6);
+					ClientMain.dDisplay("select * from cell where name = '" + name + "'");
+				}
+				// 세포 위치 조회
+				else if (str.indexOf("u") == 0) {
+					String name = str.substring(str.indexOf("u") + 1, str.indexOf("x"));
+					// 자신의 세포가 아닐 때 위치 조회
+					if (!name.equals(userName)) {
+						ClientMain.moving(str);
+					}
+				}
+				// 먹이 위치 조회
+				else if (str.indexOf("특정먹이조회") == 0 ) {
+					String name = str.substring(str.indexOf("특정먹이조회") + 6);
+					ClientMain.pDisplay("select name,x,y from particle where name = '" + name + "'");
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			main.isRunning = false;
 		}
-
 	}
-
 }

@@ -52,7 +52,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 	static Statement stmt = null;
 	static ResultSet rs = null;
 	// DB 먹이 갯수
-	int particleNo = 0;
+	static int particleNo = 0;
 
 	// 통신
 	Client client = null;
@@ -71,22 +71,17 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		makeConnection();
 		System.out.println("DB 연결");
 
-		// 플레이어 세포 DB 생성
-		insertDB("cell", nick, 100, 100, 10);
-		System.out.println("플레이어 세포 DB생성");
-		Cell.cells.add(new Cell(nick, 100, 100, 10));
-
 		// DB에서 세포 조회
-		cDisplay();
+		cDisplay("select * from cell");
 		System.out.println("DB에서 세포 조회");
 
 		// DB에서 먹이 조회
-		pDisplay();
+		pDisplay("select * from particle");
 		System.out.println("DB에서 먹이 조회");
 
 		// 서버 접속하는 부분
 		connection(this, name, client);
-		System.out.println("서버 접속하는 부분");
+		System.out.println("서버 접속");
 
 		// 게임 동작
 		start();
@@ -208,7 +203,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 
 	public void draw() {
 		lb.Update();
-		
+
 		Graphics g = pane.getGraphics();
 		Graphics bbg = backBuffer.getGraphics();
 		Graphics bbg2 = backBuffer.getGraphics();
@@ -241,7 +236,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		}
 
 		cam.unset();
-		
+
 		lb.Draw(bbg2);
 		g.drawImage(backBuffer, insets.left, insets.top, this);
 		System.out.println("그리기완료");
@@ -266,16 +261,15 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 	public void mouseMove() {
 		for (Cell c : Cell.cells) { // cells 배열 중 내 세포 찾기
 			if (c.name.equals(name)) { // 내 세포를 찾아서 x, y 좌표값 수정
-				updateDB("cell", name, c.x, c.y, c.mass);
-				client.out.println("c");
+				client.out.println("u" + c.name + "x" + (int) c.x + "y" + (int) c.y);
 			}
 		}
 
 	}
 
 	// ----------------------------------------DB 관련
-	public void makeConnection() {
-		String url = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
+	public static void makeConnection() { // conn과 stmt를 설정해준다.
+		String url = "jdbc:oracle:thin:@localhost:1521:xe";
 		String user = "test";
 		String password = "1234";
 
@@ -291,202 +285,134 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 		try {
 			conn = DriverManager.getConnection(url, user, password);
 			stmt = conn.createStatement();
-			System.out.println("---DB 연결 완료---");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	// 세포 조회 후 생성,갱신
-	public void cDisplay() {
+	// 세포 조회
+	public static void cDisplay(String str) {
 		try {
 			boolean isTrue = false;
-			String sql = "select * from cell";
-			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
+			rs = stmt.executeQuery(str);
 			while (rs.next()) {
-				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
 				isTrue = false;
-				String name = rs.getString("cname");
-				int x = (int) rs.getInt("cx");
-				int y = (int) rs.getInt("cy");
-				int mass = (int) rs.getInt("cmass");
-				System.out.println("검색 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
-				if (this.name.equals(name)) {
-					continue;
-				}
+				String name = rs.getString("name");
+				int x = rs.getInt("x");
+				int y = rs.getInt("y");
+				int mass = rs.getInt("mass");
 				// cells가 비어있지 않을 때
 				if (!Cell.cells.isEmpty()) {
-					// cells 리스트의 값들을 하나씩 검색한다.
-					for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
-						Cell c = it.next();
-						// 현재 조회중인 세포의 이름과 같을 때
+					// cells 값을 하나씩 꺼내 검색한다.
+					for (Cell c : Cell.cells) {
 						if (c.name.equals(name)) {
-							c.x = x;
-							c.y = y;
 							c.mass = mass;
-							// 현재 조회중인 세포는 리스트안에 있다고 설정
 							isTrue = true;
-							// for문을 나옴
 							break;
 						}
 					}
-					// 리스트안에 DB에서 검색중인 세포가 없을 때
+					// DB에서 검색한 세포가 리스트 안에 없을때 생성
 					if (!isTrue) {
 						Cell.cells.add(new Cell(name, x, y, mass));
 					}
-				} else {
+				} else { // cells가 비어 있을 때 생성
 					Cell.cells.add(new Cell(name, x, y, mass));
 				}
 			}
 			System.out.println("세포 DB 조회 완료");
 		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		} catch (NullPointerException e) {
-			System.out.println("Null 예외발생");
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.out.println("예외 발생");
 			e.printStackTrace();
 		}
 	}
 
-	// 특정 세포 조회 갱신
-	public void cDisplay(String str) {
-		String name = str.substring(str.indexOf("u") + 1);
-		System.out.println("name : " + name);
+	// 사망 세포 조회
+	public static void dDisplay(String str) {
 		try {
-			String sql = "select * from cell where cname = '" + name + "'";
-			rs = stmt.executeQuery(sql);
-			rs.next();
-			int x = rs.getInt("cx");
-			int y = rs.getInt("cy");
-			int mass = rs.getInt("cmass");
-			for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
-				Cell c = it.next();
-				if (c.name.equals(name)) {
-					c.x = x;
-					c.y = y;
-					c.mass = mass;
-					break;
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	// 먹이 조회 후 생성,갱신
-	public void pDisplay() {
-		try {
-			String sql = "select pname,px,py from particle";
-			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
-			int result = 0;// 검색횟수
-
+			boolean isTrue = false;
+			rs = stmt.executeQuery(str);
 			while (rs.next()) {
-				result++; // 검색할 때마다 1씩 증가
-				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
-				boolean isTrue = false;
-				String name = rs.getString("pname");
-				int x = rs.getInt("px");
-				int y = rs.getInt("py");
-				System.out.println("name : " + name + " x : " + x + " y : " + y);
-				// particles 리스트가 비어있지 않을 때
-				if (!Particle.particles.isEmpty()) {
-					// particles 리스트의 값들을 하나씩 검색한다.
-					for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
-						Particle p = it.next();
-						if (p.pname.equals(name)) {
-							p.x = x;
-							p.y = y;
-							// 현재 조회중인 것은 리스트 안에 있다고 설정
+				isTrue = false;
+				String name = rs.getString("name");
+				int x = rs.getInt("x");
+				int y = rs.getInt("y");
+				int mass = rs.getInt("mass");
+				// cells가 비어있지 않을 때
+				if (!Cell.cells.isEmpty()) {
+					// cells 값을 하나씩 꺼내 검색한다.
+					for (Cell c : Cell.cells) {
+						if (c.name.equals(name)) {
+							c.x = x;
+							c.y = y;
+							c.mass = mass;
 							isTrue = true;
-							// for문을 멈춘다.
 							break;
 						}
 					}
-					// 리스트가 생성되어 있지만 현재 검색중인 먹이가 없을 때 생성
+					// DB에서 검색한 세포가 리스트 안에 없을때 생성
+					if (!isTrue) {
+						Cell.cells.add(new Cell(name, x, y, mass));
+					}
+				} else { // cells가 비어 있을 때 생성
+					Cell.cells.add(new Cell(name, x, y, mass));
+				}
+			}
+			System.out.println("세포 DB 조회 완료");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// 먹이 조회
+	public static void pDisplay(String str) {
+		try {
+			boolean isTrue = false;
+			int sum = 0;
+			rs = stmt.executeQuery(str);
+			while (rs.next()) {
+				sum++;
+				isTrue = false;
+				String name = rs.getString("name");
+				int x = rs.getInt("x");
+				int y = rs.getInt("y");
+				System.out.println("조회 결과 name : " + name + " x : " + x + " y : " + y);
+				// particles가 비어있지 않을 때
+				if (!Particle.particles.isEmpty()) {
+					// particles 값을 하나씩 꺼내 검색한다.
+					for (Particle p : Particle.particles) {
+						if (p.pname.equals(name)) {
+							p.x = x;
+							p.y = y;
+							isTrue = true;
+							break;
+						}
+					}
+					// DB에서 검색한 먹이가 리스트 안에 없을 때 생성
 					if (!isTrue) {
 						Particle.particles.add(new Particle(name, x, y, 1));
 					}
-				} else { // particles 리스트가 비어있을 때
+				} else { // particles가 비어 있을 때 생성
 					Particle.particles.add(new Particle(name, x, y, 1));
 				}
 			}
-			particleNo = result;
-			System.out.println(particleNo + " 먹이 DB 조회 완료");
+			particleNo = sum;
+			System.out.println("먹이 DB 조회 완료");
 		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		} catch (NullPointerException e) {
-			System.out.println("Null 예외 발생");
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.out.println("예외 발생");
 			e.printStackTrace();
 		}
 	}
 
-	// 특정 먹이 조회 갱신
-	public void pDisplay(String str) {
-		String name = str.substring(str.indexOf("s") + 1);
-		System.out.println("name : " + name);
-		try {
-			String sql = "select px,py from particle where pname = '" + name + "'";
-			rs = stmt.executeQuery(sql);
-			rs.next();
-			int x = rs.getInt("px");
-			int y = rs.getInt("py");
-			for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
-				Particle p = it.next();
-				if (p.pname.equals(name)) {
-					p.x = x;
-					p.y = y;
-					break;
-				}
+	// 세포가 움직일 때
+	public static void moving(String str) {
+		String name = str.substring(str.indexOf("u") + 1, str.indexOf("x"));
+		String x = str.substring(str.indexOf("x") + 1, str.indexOf("y"));
+		String y = str.substring(str.indexOf("y") + 1);
+
+		for (Cell c : Cell.cells) {
+			if (c.name.equals(name)) {
+				c.x = Integer.parseInt(x);
+				c.y = Integer.parseInt(y);
+				break;
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	// DB 삽입
-	public void insertDB(String table, String name, int x, int y, int mass) {
-		try {
-			String sql = "insert into " + table + " values('" + name + "', " + x + " , " + y + ", " + mass + ")";
-			stmt.executeUpdate(sql);
-			System.out.println("테이블 : " + table + " 이름 : " + name + " 삽입 완료");
-		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		}
-	}
-
-	// 세포 DB 수정
-	public void updateDB(String table, String name, double x, double y, double mass) {
-		try {
-			String sql = "update cell set cx = " + x + ", cy = " + y + ", cmass = " + mass + " where cname = '" + name
-					+ "'";
-			stmt.executeUpdate(sql);
-			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
-		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		}
-	}
-
-	// DB에서 삭제
-	public void deleteDB(String name) {
-		try {
-			String sql = "delete from cell where cname = '" + name + "'";
-			stmt.executeUpdate(sql);
-			System.out.println(name + "님이 DB에서 삭제되었습니다.");
-		} catch (SQLException e) {
-
 		}
 	}
 }

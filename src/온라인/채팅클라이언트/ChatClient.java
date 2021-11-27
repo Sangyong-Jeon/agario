@@ -33,16 +33,13 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 
 	public ChatClient(String ip, int port, String name) {
 		this.name = name;
-		// Panel 기본 설정
-//		setBounds(0, 0, 300, 900);
-//		setSize(200,200);
 		init();
 		start();
 		setVisible(true);
 		// 통신 초기화
 		initNet(ip, port);
 		System.out.println("ip = " + ip);
-		
+
 	}
 
 	// 통신 초기화
@@ -53,7 +50,7 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 			// 통신용 input, output 클래스 설정
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			// true는 auto flush 설정
-			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())),true);
+			out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 		} catch (UnknownHostException e) {
 			System.out.println("IP 주소가 다릅니다.");
 		} catch (IOException e) {
@@ -68,7 +65,7 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 		this.setLayout(new BorderLayout());
 		this.add("Center", scrollPane);
 		this.add("South", textField);
-		
+
 	}
 
 	private void start() {
@@ -78,14 +75,14 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 		textArea.setForeground(Color.white);
 		textField.addActionListener(this);
 	}
-	
+
 	// 응답 대기
 	// 서버로부터 응답되어 전달된 문자열을 읽어서 textArea에 출력하기
 	@Override
 	public void run() {
 		// 닉네임 서버에 보내준다.
 		out.println(name);
-		while(true) {
+		while (true) {
 			try {
 				str = in.readLine();
 				textArea.append(str + "\n");
@@ -93,7 +90,7 @@ public class ChatClient extends JPanel implements ActionListener, Runnable {
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
 
 	@Override

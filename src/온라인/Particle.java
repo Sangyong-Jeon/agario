@@ -3,6 +3,7 @@ package 온라인;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import 온라인.게임서버.GameServer;
 import 온라인.게임서버.GameWorld;
@@ -26,20 +27,26 @@ public class Particle {
 	}
 
 	public void Update() {
-		boolean isSend = false;
-		for (Cell c : Cell.cells) {
-			if (checkCollide(c.x, c.y, c.mass)) {
-				c.addMass(this.mass);
-				GameWorld.cmassUpdateDB(c.name, c.mass);
-				GameServer.broadCasting("u"+c.name);
-				// 먹혔으니 랜덤위치에 리스폰
-				this.x = (int) Math.floor(Math.random() * 5001);
-				this.y = (int) Math.floor(Math.random() * 5001);
-				// DB에 먹이 좌표 수정
-				GameWorld.pUpdateDB(pname, x, y);
-				// 특정 먹이를 수정했다고 모든 클라이언트에게 날림
-				GameServer.broadCasting("s"+pname);
-				isSend = true;
+
+		for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+			Cell c = it.next();
+			if (c.mass < 3500) {
+				if (checkCollide(c.x, c.y, c.mass)) {
+					c.addMass(this.mass);
+					// 특정 세포 크기 DB 업데이트
+					GameWorld.updateDB("update cell set mass = " + c.mass + " where name = '" + c.name + "'");
+					// 특정 세포 조회 신호보내기
+					GameServer.broadCasting("특정세포조회" + c.name);
+					// 특정 먹이 랜덤 위치에 리스폰 후 DB 업데이트
+					this.x = (int) Math.floor(Math.random() * 10001);
+					this.y = (int) Math.floor(Math.random() * 10001);
+					GameWorld.updateDB("update particle set x = " + x + ", y =" + y + " where name = '" + pname + "'");
+					// 특정 먹이 조회 신호보내기
+					GameServer.broadCasting("특정먹이조회" + pname);
+					break;
+				}
+			} else {
+				break;
 			}
 		}
 	}

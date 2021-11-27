@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
 
+import 온라인.게임서버.GameServer;
 import 온라인.게임서버.GameWorld;
 
 public class Cell {
@@ -32,7 +33,7 @@ public class Cell {
 		double dy = (goalY - this.y);
 		this.x += dx * 1 / 35;
 		this.y += dy * 1 / 35;
-		
+
 		// 크기제한 설정 가능
 		if (this.mass > 3500) {
 			this.mass = 3500;
@@ -44,23 +45,27 @@ public class Cell {
 		if (this.mass > 3500) {
 			this.mass = 3500;
 		}
-		
-		
-		for (Cell c : cells) {
-			// 꺼낸 세포와 부딪혔고, 꺼낸 세포와 이 세포가 같지 안혹, 이 세포의 크기가 꺼낸 세포보다 10보다 더 클 때
-			if(checkCollide(c.x, c.y, c.mass) && this != c && this.mass > c.mass + 10) {
-				// 현 세포가 꺼낸 세포보다 2.5배 이하지만 크고, 자신의 크기가 4000미만 일 때
-				if (1/ (this.mass/c.mass)>= 0.4 && this.mass < 4000 ) {
-					addMass(c.mass);
-					GameWorld.cmassUpdateDB(name, mass);
+
+		for (Cell c : Cell.cells) {
+			// 꺼낸 세포와 부딪혔고, 꺼낸 세포와 이 세포가 같지 않고, 이 세포의 크기가 꺼낸 세포보다 10보다 더 클 때
+			if (checkCollide(c.x, c.y, c.mass) && this != c && this.mass > c.mass + 10) {
+				// 현 세포가 꺼낸 세포보다 10배 이하지만 크고, 자신의 크기가 4000미만 일 때
+				if (1 / (this.mass / c.mass) >= 0.1 && this.mass < 4000) {
+					this.addMass(c.mass);
+					// 이 세포 크기 DB 업데이트
+					GameWorld.updateDB("update cell set mass = " + this.mass + " where name = '" + this.name + "'");
+					// 이 세포 조회 신호보내기
+					GameServer.broadCasting("특정세포조회" + this.name);
+					// 꺼낸 세포 랜덤 위치에 리스폰 후 DB 업데이트
+					respawn(c);
+					GameWorld.updateDB("update cell set x = " + c.x + ", y = " + c.y + ", mass = " + 20 + " where name = '" + c.name + "'");
+					// 꺼낸 세포 조회 신호 보내기
+					GameServer.broadCasting("사망세포조회" + c.name);
 				}
-				respawn(c);
-				GameWorld.cUpdateDB(c.name, c.x, c.y, c.mass);
-				GameWorld.cellDisplay(c.name);
 			}
 		}
 	}
-	
+
 	// 세포 부활
 	public void respawn(Cell c) {
 		c.x = (int) Math.floor(Math.random() * 2001);

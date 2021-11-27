@@ -55,17 +55,18 @@ public class GameWorld extends JFrame {
 		makeConnection();
 
 		// DB에서 먹이 조회
-		pDisplay();
+		pDisplay("select * from particle");
 
 		// DB 먹이 갯수가 5000개 미만일 때 먹이 생성
-		while (particleNo < 5000) {
-			insertDB("particle", "p" + particleNo++, (int) Math.floor(Math.random() * 5000),
-					(int) Math.floor(Math.random() * 5000), 1);
+		while (particleNo < 10000) {
+			int x = (int) Math.floor(Math.random() * 10000);
+			int y = (int) Math.floor(Math.random() * 10000);
+			insertDB("insert into particle values('" + particleNo++ + "'," + x + "," + y + ", 1)");
 		}
-		pDisplay();
+		pDisplay("select * from particle");
 
 		// DB안의 세포 조회
-		cDisplay();
+		cDisplay("select * from cell");
 
 		// 무한 반복
 		while (true) {
@@ -93,8 +94,6 @@ public class GameWorld extends JFrame {
 		for (Cell c : Cell.cells) {
 			c.Action();
 		}
-
-		System.out.println("동작 완료");
 	}
 
 	// 그리기
@@ -105,10 +104,10 @@ public class GameWorld extends JFrame {
 
 		bbg.setColor(Color.black);
 		bbg.fillRect(0, 0, width, height);
-		
+
 		Graphics2D g2 = (Graphics2D) bbg;
 		g2.scale(0.18, 0.18);
-		g2.translate(width +300, height/2 - 100);
+		g2.translate(width + 300, height / 2 - 100);
 
 		ArrayList<Particle> pCopy = new ArrayList<Particle>(Particle.particles);
 		if (!pCopy.isEmpty()) { // 안 비어있을 때
@@ -123,17 +122,14 @@ public class GameWorld extends JFrame {
 				c.Draw(bbg);
 			}
 		}
-		
-		
 
 		g.drawImage(backBuffer, insets.left, insets.top, this);
-		System.out.println("그리기 완료");
 	}
 
 	// ------------------------------------------------DB 관련 메소드
 
 	public static void makeConnection() { // conn과 stmt를 설정해준다.
-		String url = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
+		String url = "jdbc:oracle:thin:@localhost:1521:xe";
 		String user = "test";
 		String password = "1234";
 
@@ -154,187 +150,98 @@ public class GameWorld extends JFrame {
 		}
 	}
 
-	// 세포 조회 후 생성,갱신
-	public static void cDisplay() {
+	// 세포 조회
+	public static void cDisplay(String str) {
 		try {
 			boolean isTrue = false;
-			String sql = "select * from cell";
-			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
+			rs = stmt.executeQuery(str);
 			while (rs.next()) {
-				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
 				isTrue = false;
-				String name = rs.getString("cname");
-				int x = (int) rs.getInt("cx");
-				int y = (int) rs.getInt("cy");
-				int mass = (int) rs.getInt("cmass");
-				System.out.println("검색 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				String name = rs.getString("name");
+				int x = rs.getInt("x");
+				int y = rs.getInt("y");
+				int mass = rs.getInt("mass");
+				System.out.println("조회 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
 				// cells가 비어있지 않을 때
 				if (!Cell.cells.isEmpty()) {
-					// cells 리스트의 값들을 하나씩 검색한다.
-					for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
-						Cell c = it.next();
-						// 현재 조회중인 세포의 이름과 같을 때
+					// cells 값을 하나씩 꺼내 검색한다.
+					for (Cell c : Cell.cells) {
 						if (c.name.equals(name)) {
 							c.x = x;
 							c.y = y;
 							c.mass = mass;
-							// 현재 조회중인 세포는 리스트안에 있다고 설정
 							isTrue = true;
-							// for문을 나옴
 							break;
 						}
 					}
-					// 리스트안에 DB에서 검색중인 세포가 없을 때
+					// DB에서 검색한 세포가 리스트 안에 없을때 생성
 					if (!isTrue) {
 						Cell.cells.add(new Cell(name, x, y, mass));
 					}
-				} else {
+				} else { // cells가 비어 있을 때 생성
 					Cell.cells.add(new Cell(name, x, y, mass));
 				}
 			}
 			System.out.println("세포 DB 조회 완료");
 		} catch (SQLException e) {
-			System.out.println("GameWorld에서 SQLException 발생");
-			e.printStackTrace();
-		} catch (NullPointerException e) {
-			System.out.println("GameWorld에서 Null 예외발생");
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.out.println("GameWorld에서 예외 발생");
 			e.printStackTrace();
 		}
 	}
 
-	// 특정 세포 조회 후 갱신
-	public static void cellDisplay(String cname) {
+	// 먹이 조회
+	public static void pDisplay(String str) {
 		try {
-			String sql = "select * from cell where cname = '" + cname + "'";
-			rs = stmt.executeQuery(sql);
-			rs.next();
-			String name = rs.getString("cname");
-			int x = (int) rs.getInt("cx");
-			int y = (int) rs.getInt("cy");
-			int mass = (int) rs.getInt("cmass");
-			System.out.println("검색 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
-			for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
-				Cell c = it.next();
-				if (c.name.equals(name)) {
-					c.x = x;
-					c.y = y;
-					c.mass = mass;
-					GameServer.broadCasting("u" + c.name);
-					break;
-				}
-			}
-			System.out.println(name + " 특정 세포 조회 완료");
-		} catch (SQLException e) {
-			System.out.println("GameWorld에서 SQL 예외 발생");
-			e.printStackTrace();
-		} catch (NullPointerException e) {
-			System.out.println("GameWorld에서 Null 예외발생");
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.out.println("GameWorld에서 예외 발생");
-			e.printStackTrace();
-		}
-	}
-
-	// 먹이 조회 후 생성,갱신
-	public static void pDisplay() {
-		try {
-			String sql = "select * from particle";
-			rs = stmt.executeQuery(sql); // sql 쿼리문 실행 후 돌아오는 조회값을 ResultSet 객체에 넣음
-			int result = 0;// 검색횟수
-
+			boolean isTrue = false;
+			int sum = 0;
+			rs = stmt.executeQuery(str);
 			while (rs.next()) {
-				result++; // 검색할 때마다 1씩 증가
-				// 검색할 때 마다 isTrue를 false로 초기화시켜줌
-				boolean isTrue = false;
-				String name = rs.getString("pname");
-				int x = rs.getInt("px");
-				int y = rs.getInt("py");
-				int mass = rs.getInt("pmass");
-				System.out.println("name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
-				// particles 리스트가 비어있지 않을 때
+				sum++;
+				isTrue = false;
+				String name = rs.getString("name");
+				int x = rs.getInt("x");
+				int y = rs.getInt("y");
+				int mass = rs.getInt("mass");
+				System.out.println("조회 결과 name : " + name + " x : " + x + " y : " + y + " mass : " + mass);
+				// particles가 비어있지 않을 때
 				if (!Particle.particles.isEmpty()) {
-					// particles 리스트의 값들을 하나씩 검색한다.
-					for (Iterator<Particle> it = Particle.particles.iterator(); it.hasNext();) {
-						Particle p = it.next();
+					// particles 값을 하나씩 꺼내 검색한다.
+					for (Particle p : Particle.particles) {
 						if (p.pname.equals(name)) {
-							p.x = x;
-							p.y = y;
-							// 현재 조회중인 것은 리스트 안에 있다고 설정
 							isTrue = true;
-							// for문을 멈춘다.
 							break;
 						}
 					}
-					// 리스트가 생성되어 있지만 현재 검색중인 먹이가 없을 때 생성
+					// DB에서 검색한 먹이가 리스트 안에 없을 때 생성
 					if (!isTrue) {
 						Particle.particles.add(new Particle(name, x, y, mass));
 					}
-				} else { // particles 리스트가 비어있을 때
+				} else { // particles가 비어 있을 때 생성
 					Particle.particles.add(new Particle(name, x, y, mass));
 				}
 			}
-			particleNo = result;
-			System.out.println(particleNo + " 먹이 DB 조회 완료");
+			particleNo = sum;
+			System.out.println("먹이 DB 조회 완료");
 		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		} catch (NullPointerException e) {
-			System.out.println("Null 예외 발생");
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.out.println("예외 발생");
 			e.printStackTrace();
 		}
 	}
 
 	// DB 삽입
-	public static void insertDB(String table, String name, int x, int y, int mass) {
+	public static void insertDB(String str) {
 		try {
-			String sql = "insert into " + table + " values('" + name + "', " + x + " , " + y + ", " + mass + ")";
-			stmt.executeUpdate(sql);
-			System.out.println("테이블 : " + table + " 이름 : " + name + " 업데이트 완료");
+			stmt.executeUpdate(str);
+			System.out.println(str);
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
 			e.printStackTrace();
 		}
 	}
 
-	// 세포 DB 수정
-	public static void cUpdateDB(String name, double x, double y, double mass) {
+	// DB 수정
+	public static void updateDB(String str) {
 		try {
-			String sql = "update cell set cx = " + x + ", cy = " + y + ", cmass = " + mass + " where cname = '" + name
-					+ "'";
-			stmt.executeUpdate(sql);
-			System.out.println("테이블 : cell" + " 이름 : " + name + " 업데이트 완료");
-		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		}
-	}
-
-	// 특정 세포 크기 수정
-	public static void cmassUpdateDB(String name, double mass) {
-		try {
-			String sql = "update cell set cmass = " + mass + " where cname = '" + name + "'";
-			stmt.executeUpdate(sql);
-			System.out.println("테이블 : cell" + " 이름 : " + name + " 크기 업데이트 완료");
-			GameServer.broadCasting("u" + name);
-		} catch (SQLException e) {
-			System.out.println("SQLException 발생");
-			e.printStackTrace();
-		}
-	}
-
-	// 먹이 DB 수정
-	public static void pUpdateDB(String name, double x, double y) {
-		try {
-			String sql = "update particle set px = " + x + ", py = " + y + " where pname = '" + name + "'";
-			stmt.executeUpdate(sql);
-			System.out.println("테이블 : particle" + " 이름 : " + name + " 업데이트 완료");
+			stmt.executeUpdate(str);
+			System.out.println(str);
 		} catch (SQLException e) {
 			System.out.println("SQLException 발생");
 			e.printStackTrace();
@@ -342,14 +249,26 @@ public class GameWorld extends JFrame {
 	}
 
 	// DB에서 삭제
-	public static void deleteDB(String name) {
+	public static void deleteDB(String str) {
 		try {
-			String sql = "delete from cell where cname = '" + name + "'";
-			stmt.executeUpdate(sql);
-			System.out.println(name + "님이 DB에서 삭제되었습니다.");
+			stmt.executeUpdate(str);
+			System.out.println(str);
 		} catch (SQLException e) {
-
+			e.printStackTrace();
 		}
 	}
 
+	// 세포가 움직일 때
+	public static void moving(String str) {
+		String name = str.substring(str.indexOf("u") + 1, str.indexOf("x"));
+		String x = str.substring(str.indexOf("x") + 1, str.indexOf("y"));
+		String y = str.substring(str.indexOf("y") + 1);
+		for (Cell c : Cell.cells) {
+			if (c.name.equals(name)) {
+				c.x = Integer.parseInt(x);
+				c.y = Integer.parseInt(y);
+				break;
+			}
+		}
+	}
 }
