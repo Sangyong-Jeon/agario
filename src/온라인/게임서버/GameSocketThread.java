@@ -44,10 +44,10 @@ public class GameSocketThread extends Thread {
 			int y = (int) Math.floor(Math.random() * 5000);
 			GameWorld.insertDB("insert into cell values('" + name + "'," + x + "," + y + ", 20)");
 
-			// 방금 생성한 세포 리스트에 추가하기
+			// 방금 생성한 세포를 리스트에 추가하기
 			GameWorld.cDisplay("select * from cell where name = '" + name + "'");
 
-			// 세포를 추가했으니 클라이언트에게도 조회하라고 신호보내기
+			// 세포를 추가했으니 클라이언트들에게도 조회하라고 신호보내기
 			GameServer.broadCasting("첫세포조회" + name);
 
 			// 무한 반복
@@ -71,6 +71,7 @@ public class GameSocketThread extends Thread {
 			for (Cell c : Cell.cells) {
 				if (c.name.equals(name)) {
 					System.out.println(c.name + " 퇴장했습니다. ");
+					GameServer.broadCasting("퇴장"+c.name);
 					Cell.cells.remove(c);
 					break;
 				}

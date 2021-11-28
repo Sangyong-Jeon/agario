@@ -304,7 +304,8 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 				// cells가 비어있지 않을 때
 				if (!Cell.cells.isEmpty()) {
 					// cells 값을 하나씩 꺼내 검색한다.
-					for (Cell c : Cell.cells) {
+					for(Iterator<Cell> it = Cell.cells.iterator();it.hasNext();) {
+						Cell c = it.next();
 						if (c.name.equals(name)) {
 							c.mass = mass;
 							isTrue = true;

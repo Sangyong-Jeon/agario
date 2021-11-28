@@ -9,8 +9,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Iterator;
 
 import javax.swing.JPanel;
+
+import 온라인.Cell;
 
 public class Client extends JPanel implements Runnable {
 	// 통신용
@@ -70,7 +73,7 @@ public class Client extends JPanel implements Runnable {
 					String name = str.substring(str.indexOf("특정세포조회") + 6);
 					ClientMain.cDisplay("select * from cell where name = '" + name + "'");
 				}
-				// 사망 세포  조회
+				// 사망 세포 조회
 				else if (str.indexOf("사망세포조회") == 0) {
 					String name = str.substring(str.indexOf("사망세포조회") + 6);
 					ClientMain.dDisplay("select * from cell where name = '" + name + "'");
@@ -84,9 +87,20 @@ public class Client extends JPanel implements Runnable {
 					}
 				}
 				// 먹이 위치 조회
-				else if (str.indexOf("특정먹이조회") == 0 ) {
+				else if (str.indexOf("특정먹이조회") == 0) {
 					String name = str.substring(str.indexOf("특정먹이조회") + 6);
 					ClientMain.pDisplay("select name,x,y from particle where name = '" + name + "'");
+				}
+				// 퇴장 세포 삭제
+				else if (str.indexOf("퇴장") == 0) {
+					String name = str.substring(str.indexOf("퇴장") + 2);
+					for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
+						Cell c = it.next();
+						if (c.name.equals(name)) {
+							Cell.cells.remove(c);
+							break;
+						}
+					}
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
