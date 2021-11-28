@@ -38,8 +38,8 @@ public class Particle {
 					// 특정 세포 조회 신호보내기
 					GameServer.broadCasting("특정세포조회" + c.name);
 					// 특정 먹이 랜덤 위치에 리스폰 후 DB 업데이트
-					this.x = (int) Math.floor(Math.random() * 10001);
-					this.y = (int) Math.floor(Math.random() * 10001);
+					this.x = (int) Math.floor(Math.random() * 5001);
+					this.y = (int) Math.floor(Math.random() * 5001);
 					GameWorld.updateDB("update particle set x = " + x + ", y =" + y + " where name = '" + pname + "'");
 					// 특정 먹이 조회 신호보내기
 					GameServer.broadCasting("특정먹이조회" + pname);

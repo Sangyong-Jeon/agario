@@ -58,9 +58,9 @@ public class GameWorld extends JFrame {
 		pDisplay("select * from particle");
 
 		// DB 먹이 갯수가 5000개 미만일 때 먹이 생성
-		while (particleNo < 10000) {
-			int x = (int) Math.floor(Math.random() * 10000);
-			int y = (int) Math.floor(Math.random() * 10000);
+		while (particleNo < 5000) {
+			int x = (int) Math.floor(Math.random() * 5000);
+			int y = (int) Math.floor(Math.random() * 5000);
 			insertDB("insert into particle values('" + particleNo++ + "'," + x + "," + y + ", 1)");
 		}
 		pDisplay("select * from particle");
