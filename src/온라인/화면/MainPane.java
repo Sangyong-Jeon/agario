@@ -1,7 +1,6 @@
 package 온라인.화면;
 
 import javax.swing.JLayeredPane;
-
 import 온라인.자주쓰는거.MyButton;
 import 온라인.자주쓰는거.MyLabel;
 

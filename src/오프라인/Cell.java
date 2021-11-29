@@ -193,21 +193,19 @@ public class Cell {
 				x + mass > this.x && // x + mass 가 이 세포의 x 보다 크고,
 				y + mass > this.y; // y + mass 가 이 세포의 y보다 크면 true, 아니면 false를 리턴한다.
 	}
-
-	public void shootMass() { // 플레이어 세포가 뿌리는 먹이
-		double startX = this.x + this.mass / 2; // 현재 자기위치인 원 중심
+	// 플레이어 세포가 뿌리는 먹이
+	public void shootMass() { 
+		// 현재 자기위치인 원 중심
+		double startX = this.x + this.mass / 2; 
 		double startY = this.y + this.mass / 2;
-		Particle a = new Particle((int) startX, (int) startY, 1, true); // 이 세포의 원 중심으로 먹이를 생성
-
+		// 이 세포의 원 중심으로 먹이를 생성
+		Particle a = new Particle((int) startX, (int) startY, 1, true); 
 		Particle.particles.add(a);
-		double sum = Math
-				.sqrt((this.goalX - startX) * (this.goalX - startX) + (this.goalY - startY) * (this.goalY - startY)); // 이
-																														// 세포와
-																														// 마우스
-																														// 좌표값까지
-																														// 거리
+		// 이 세포와 마우스 좌표값까지 거리
+		double sum = Math.sqrt((this.goalX - startX) * (this.goalX - startX) + (this.goalY - startY) * (this.goalY - startY)); 
 		System.out.println(sum);
-		if (sum > 500) { // 거리가 멀수록 먹이를 뿌리는 속도는 빨라짐
+		// 거리가 멀수록 먹이를 뿌리는 속도는 빨라짐
+		if (sum > 500) { 
 			a.speed = 30;
 		} else if (sum > 400) {
 			a.speed = 23;

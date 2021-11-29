@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Toolkit;
-
 import javax.swing.JFrame;
 
 public class GameMain extends JFrame {

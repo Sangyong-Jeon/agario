@@ -15,9 +15,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.JFrame;
-
 import 온라인.Cell;
 import 온라인.Particle;
 

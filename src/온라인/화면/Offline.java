@@ -1,7 +1,6 @@
 package 온라인.화면;
 
 import javax.swing.JPanel;
-
 import 오프라인.OfflineGame;
 
 public class Offline extends JPanel implements Runnable{

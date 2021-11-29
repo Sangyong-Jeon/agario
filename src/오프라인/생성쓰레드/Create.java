@@ -8,8 +8,6 @@ public class Create implements Runnable {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-
 		while (Cell.cellCount < 150) { // AI 세포 생성
 			Cell.cells.add(new Cell(("Cell " + Cell.cellCount), (int) Math.floor(Math.random() * 10001),
 					(int) Math.floor(Math.random() * 2801), false));

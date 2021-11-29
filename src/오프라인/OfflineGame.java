@@ -1,6 +1,5 @@
 package 오프라인;
 
-import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -12,14 +11,12 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-
 import 오프라인.생성쓰레드.Create;
 
-
-public class OfflineGame extends JFrame implements MouseMotionListener { // JFrame이라고 불리는 클래스 상속받고, MouseMotionListener 구현함.
+public class OfflineGame extends JFrame implements MouseMotionListener { // JFrame이라고 불리는 클래스 상속받고, MouseMotionListener
+																			// 구현함.
 	// 구현을 하면 부모의 메소드를 반드시 오버라이딩(재정의)해야함.
 	// implements는 interface 상속에 사용됨.
 	// MouseMotionListener는 마우스의 움직임을 인터페이스를 통해 처리함.
@@ -47,16 +44,17 @@ public class OfflineGame extends JFrame implements MouseMotionListener { // JFra
 
 	public OfflineGame() {
 		initialize();
-
+		
 		Thread cc = new Thread(new Create(), "먹이생성");
 		cc.run();
-		
+
 		while (isRunning) {
+			// 현재 시간초
 			long time = System.currentTimeMillis();
 			update();
 			draw();
+			// 16.666 - update()와 draw() 돌리고 난 시간초 - 첫 시간초만큼 딜레이줌.
 			time = (1000 / fps) - (System.currentTimeMillis() - time);
-
 			if (time > 0) {
 				try {
 					Thread.sleep(time);
@@ -81,7 +79,7 @@ public class OfflineGame extends JFrame implements MouseMotionListener { // JFra
 		this.setSize(this.insets.left + width + this.insets.right, this.insets.top + height + this.insets.bottom);
 		this.setLocation(monitorWidth / 2 - this.getSize().width / 2, monitorHeight / 2 - this.getSize().height / 2);
 		this.setVisible(true);
-		
+
 		pane = new JPanel();
 		this.requestFocus(); // 마우스 포커스 주기
 		this.addMouseMotionListener(this); // 프레임 자체가 마우스 이벤트를 감지하도록 처리
@@ -94,34 +92,13 @@ public class OfflineGame extends JFrame implements MouseMotionListener { // JFra
 		this.backBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 	}
 
-	public void run() {
-		initialize();
-
-		while (isRunning) {
-			long time = System.currentTimeMillis(); // 현재 시간초
-//			update();
-			draw();
-			this.setVisible(true);
-			time = (1000 / fps) - (System.currentTimeMillis() - time);
-			// 16.6666 - update()와 draw() 돌리고 난 시간초 - 첫시작초
-			if (time > 0) {
-				try {
-					Thread.sleep(time);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		setVisible(false);
-		System.exit(0);
-	}
-
 	public void update() {
 		lb.Update(); // 세포 큰 순으로 정렬
 
 		for (int i = 0; i < Cell.cells.size(); i++) { // 플레이어 세포 찾기
 			if (Cell.cells.get(i).name.equals("Bruce")) {
 				cam.Update(Cell.cells.get(i)); // 플레이어 세포에 맞춰서 시야 늘리기
+				break;
 			}
 		}
 
@@ -174,9 +151,9 @@ public class OfflineGame extends JFrame implements MouseMotionListener { // JFra
 		lb.Draw(bbg2);
 		g.drawImage(backBuffer, insets.left, insets.top, this);
 	}
-	
+
 	public void mouseMoved(MouseEvent e) { // 마우스가 클릭되지 않고 이동하는 경우 호출
-		
+
 		for (Cell cell : Cell.cells) {
 			if (cell.name.equals("Bruce")) {
 				cell.getMouseX((int) (e.getX() / cam.sX + cam.x));

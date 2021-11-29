@@ -10,9 +10,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Iterator;
-
 import javax.swing.JPanel;
-
 import ¿Â¶óÀÎ.Cell;
 
 public class Client extends JPanel implements Runnable {
