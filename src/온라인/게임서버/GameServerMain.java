@@ -6,7 +6,7 @@ public class GameServerMain {
 		Thread server = new Thread(new GameServer(), "게임서버소켓");
 		server.start();
 		// 게임서버를 실행한다.
-		GameWorld game = new GameWorld();
+		new GameWorld();
 		
 		// 쓰레드로 실행하는 방식
 //		Thread world = new Thread(new GameWorld(), "게임서버");

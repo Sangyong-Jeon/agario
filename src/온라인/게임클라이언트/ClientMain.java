@@ -261,7 +261,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 	public void mouseMove() {
 		for (Cell c : Cell.cells) { // cells 배열 중 내 세포 찾기
 			if (c.name.equals(name)) { // 내 세포를 찾아서 x, y 좌표값 수정
-				client.out.println("u" + c.name + "x" + (int) c.x + "y" + (int) c.y);
+				Client.out.println("u" + c.name + "x" + (int) c.x + "y" + (int) c.y);
 			}
 		}
 
@@ -269,9 +269,9 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 
 	// ----------------------------------------DB 관련
 	public static void makeConnection() { // conn과 stmt를 설정해준다.
-		String url = "jdbc:oracle:thin:@localhost:1521:xe";
-		String user = "test";
-		String password = "1234";
+		String url = "jdbc:oracle:thin:@10.30.3.95:1521:orcl";
+		String user = "c##2001506";
+		String password = "p2001506";
 
 		// 1. JDBC 드라이버 적재
 		try {
@@ -304,7 +304,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 				// cells가 비어있지 않을 때
 				if (!Cell.cells.isEmpty()) {
 					// cells 값을 하나씩 꺼내 검색한다.
-					for(Iterator<Cell> it = Cell.cells.iterator();it.hasNext();) {
+					for (Iterator<Cell> it = Cell.cells.iterator(); it.hasNext();) {
 						Cell c = it.next();
 						if (c.name.equals(name)) {
 							c.mass = mass;

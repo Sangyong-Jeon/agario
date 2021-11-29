@@ -3,7 +3,6 @@ package 온라인;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-import 오프라인.OfflineGame;
 import 온라인.게임클라이언트.ClientMain;
 
 public class Camera {
