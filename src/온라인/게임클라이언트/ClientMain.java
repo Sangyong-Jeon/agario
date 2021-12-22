@@ -151,7 +151,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 			InetAddress ia = InetAddress.getLocalHost();
 			String ip_str = ia.toString();
 			String ip = ip_str.substring(ip_str.indexOf("/") + 1);
-			ChatClient chat = new ChatClient("10.30.4.190", 5555, name);
+			ChatClient chat = new ChatClient(ip, 5555, name);
 			this.add(chat, "West");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -165,7 +165,7 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 			String ip_str = ia.toString();
 			String ip = ip_str.substring(ip_str.indexOf("/") + 1);
 			System.out.println("ClientMain : " + name);
-			client = new Client("10.30.4.190", 5556, main, name);
+			client = new Client(ip, 5556, main, name);
 			main.setVisible(true);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
