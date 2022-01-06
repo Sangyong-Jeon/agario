@@ -127,10 +127,9 @@ public class GameWorld extends JFrame {
 	// ------------------------------------------------DB 관련 메소드
 
 	public static void makeConnection() { // conn과 stmt를 설정해준다.
-		// 172.26.1.93
-		String url = "jdbc:oracle:thin:@10.30.3.95:1521:orcl";
-		String user = "c##2001506";
-		String password = "p2001506";
+		String url = "jdbc:oracle:thin:@localhost:1521:xe";
+		String user = "test";
+		String password = "1234";
 
 		// 1. JDBC 드라이버 적재
 		try {

@@ -267,9 +267,9 @@ public class ClientMain extends JFrame implements MouseMotionListener {
 
 	// ----------------------------------------DB 관련
 	public static void makeConnection() { // conn과 stmt를 설정해준다.
-		String url = "jdbc:oracle:thin:@10.30.3.95:1521:orcl";
-		String user = "c##2001506";
-		String password = "p2001506";
+		String url = "jdbc:oracle:thin:@localhost:1521:xe";
+		String user = "test";
+		String password = "1234";
 
 		// 1. JDBC 드라이버 적재
 		try {
