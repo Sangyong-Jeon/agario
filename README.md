@@ -31,7 +31,11 @@ Table 3개를 만듭니다.
   5. 클라이언트 점수 번호(NUM), 이름(NAME), 점수(SCORE) 컬럼이 있는 SCORE 테이블
 
 ### 실행하기 전 DB 변경하기
-온라인/게임 서버/GameWorld.java , 온라인/게임클라이언트/ClientMain.java 에서 DB를 연결하는 makeConnection() 메서드를 찾습니다.
+온라인/게임 서버/GameWorld.java , 
+
+온라인/게임클라이언트/ClientMain.java 
+
+위 2개의 파일에서 DB를 연결하는 makeConnection() 메서드를 찾습니다.
 
 그 메서드에서 사용자의 db값을 알맞게 수정하여 DB와 연결합니다.
 
